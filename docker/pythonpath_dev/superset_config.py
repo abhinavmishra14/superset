@@ -123,7 +123,6 @@ class AirbnbAuthRemoteUserView(AuthRemoteUserView):
     def login(self):
       user = self.appbuilder.sm.auth_user_db("admin", "admin") #Using default credentials
       login_user(user, remember=False)
-      logger.info("Bypassed login, redirecting to Dashboard!!")
       return redirect(self.appbuilder.get_url_for_index)
 
 
