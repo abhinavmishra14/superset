@@ -28,6 +28,13 @@ from typing import Optional
 from cachelib.file import FileSystemCache
 from celery.schedules import crontab
 
+from flask_appbuilder.security.views import expose
+from superset.security import SupersetSecurityManager
+from flask_appbuilder.security.manager import BaseSecurityManager
+from flask_appbuilder.security.manager import AUTH_REMOTE_USER
+from flask import  redirect
+from flask_login import login_user
+
 logger = logging.getLogger()
 
 
@@ -108,6 +115,27 @@ WEBDRIVER_BASEURL = "http://superset:8088/"
 WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 
 SQLLAB_CTAS_NO_LIMIT = True
+
+# Create a custom view to authenticate the user
+AuthRemoteUserView=BaseSecurityManager.authremoteuserview
+class AirbnbAuthRemoteUserView(AuthRemoteUserView):
+    @expose('/login/')
+    def login(self):
+      user = self.appbuilder.sm.auth_user_db("admin", "admin") #Using default credentials
+      login_user(user, remember=False)
+      logger.info("Bypassed login, redirecting to Dashboard!!")
+      return redirect(self.appbuilder.get_url_for_index)
+
+
+# Create a custom Security manager that override the authremoteuserview with the one I've created
+class CustomSecurityManager(SupersetSecurityManager):
+    authremoteuserview = AirbnbAuthRemoteUserView
+
+# Use my custom authenticator
+CUSTOM_SECURITY_MANAGER = CustomSecurityManager
+
+# User remote authentication
+AUTH_TYPE = AUTH_REMOTE_USER
 
 #
 # Optionally import superset_config_docker.py (which will have been included on
